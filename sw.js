@@ -1,5 +1,5 @@
 /* Service worker — app shell cache for full offline use */
-const CACHE = "maths-nathan-v2";
+const CACHE = "maths-nathan-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -17,13 +17,21 @@ self.addEventListener("activate", e => {
       .then(() => self.clients.claim())
   );
 });
+function cachePut(req, res){ const c=res.clone(); caches.open(CACHE).then(x=>x.put(req,c)).catch(()=>{}); return res; }
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET") return;
-  e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
-      return res;
-    }).catch(() => caches.match("./index.html")))
-  );
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const isHTML = req.mode === "navigate" || (req.headers.get("accept")||"").includes("text/html");
+  if (isHTML){
+    // network-first so updates show immediately when online; cache fallback offline
+    e.respondWith(
+      fetch(req).then(res => cachePut(req, res))
+        .catch(() => caches.match(req).then(hit => hit || caches.match("./index.html")))
+    );
+  } else {
+    // cache-first for static assets (icons, manifest)
+    e.respondWith(
+      caches.match(req).then(hit => hit || fetch(req).then(res => cachePut(req, res)))
+    );
+  }
 });

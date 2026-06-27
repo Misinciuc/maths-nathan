@@ -83,6 +83,15 @@
   .heroPreview{display:flex;flex-direction:column;align-items:center;gap:6px;margin:8px 0;}
   .heroName{font-weight:800;font-size:18px;}
   .heroPower{color:var(--muted);font-size:14px;}
+  .levelpick{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:2px 0 4px;}
+  .lvbtn{border:2px solid var(--soft);background:var(--card);border-radius:14px;
+    padding:9px 12px;font-weight:800;font-size:15px;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:1px;min-width:62px;}
+  .lvbtn:active{transform:scale(.95);}
+  .lvbtn .rg{font-size:11px;color:var(--muted);font-weight:600;}
+  .lvbtn.done{border-color:var(--green);}
+  .lvbtn.sel{border-color:var(--blue);background:#eaf2fb;color:var(--blue-d);}
+  .lvbtn.locked{opacity:.45;}
 
   /* ---------- Practice ---------- */
   .progresswrap{padding:6px 4px 0;}
@@ -98,6 +107,8 @@
   .equation{font-size:12vh;font-weight:800;letter-spacing:2px;line-height:1;
     display:flex;align-items:center;gap:.16em;flex-wrap:wrap;justify-content:center;}
   @media(min-width:760px){.equation{font-size:92px;}}
+  .equation.seqeq{font-size:8vh;gap:.28em;letter-spacing:0;}
+  @media(min-width:760px){.equation.seqeq{font-size:58px;}}
   .answerbox{min-width:1.2em;min-height:1.05em;border-bottom:8px solid var(--blue);
     text-align:center;color:var(--blue);padding:0 .1em;}
   .answerbox.empty{color:#b9c9d8;}
@@ -186,9 +197,10 @@
 <div class="app">
 
   <div class="topbar">
+    <button class="iconbtn" id="homeBtn" title="Menu">🏠</button>
     <div class="pill" id="streakPill">🔥 <span id="streakNum">0</span></div>
     <div class="pill" id="starPill">⭐ <span id="starNum">0</span></div>
-    <button class="iconbtn" id="galleryBtn" title="Héros">🦸</button>
+    <button class="iconbtn" id="galleryBtn" title="Dinosaures">🦕</button>
     <button class="iconbtn" id="soundBtn" title="Son">🔊</button>
     <button class="iconbtn" id="parentBtn" title="Parent">⚙️</button>
   </div>
@@ -212,7 +224,8 @@
     <div class="center" style="flex:1;justify-content:center;">
       <div class="levelchip tag" id="chapLevel">Niveau 1</div>
       <div class="heroPreview" id="chapHero"></div>
-      <div class="dots" id="chapDots" style="justify-content:center;"></div>
+      <div class="small" style="margin-top:2px;">Choisis ton niveau :</div>
+      <div class="levelpick" id="chapLevels"></div>
       <button class="bigbtn green" id="trainBtn">S'entraîner ▶</button>
       <button class="bigbtn amber" id="testBtn">🏅 Test de passage</button>
       <div class="small" id="testHint"></div>
@@ -257,7 +270,7 @@
   <div class="screen scroll hidden" id="galleryScreen">
     <div class="backrow">
       <button class="iconbtn" id="galBack">←</button>
-      <div class="levelbig">Mes héros 🦸 <span class="small" id="galCount"></span></div>
+      <div class="levelbig">Mes dinosaures 🦕 <span class="small" id="galCount"></span></div>
     </div>
     <div class="gallery" id="gallery"></div>
   </div>
@@ -269,7 +282,7 @@
   <div class="burst">★ NOUVEAU NIVEAU ★</div>
   <div id="levelupHero"></div>
   <h1 id="levelupTitle">Bravo Nathan !</h1>
-  <div class="nh" id="levelupName">Nouveau héros !</div>
+  <div class="nh" id="levelupName">Nouveau dinosaure !</div>
   <div class="pw" id="levelupPower"></div>
   <button class="bigbtn green" id="levelupBtn">Continuer</button>
 </div>
@@ -313,7 +326,7 @@
       <div class="statrow" style="justify-content:flex-start;margin-top:10px;">
         <div class="stat"><div class="big" id="sumDays">0</div><div class="lbl">jours de suite</div></div>
         <div class="stat"><div class="big" id="sumSets">0</div><div class="lbl">séances</div></div>
-        <div class="stat"><div class="big" id="sumHeroes">0</div><div class="lbl">héros</div></div>
+        <div class="stat"><div class="big" id="sumHeroes">0</div><div class="lbl">dinosaures</div></div>
         <div class="stat"><div class="big" id="sumAcc">—</div><div class="lbl">justesse moy.</div></div>
       </div>
     </div>
@@ -347,38 +360,48 @@
 /* ============================================================
    Maths de Nathan v2 — chapters, recognition, mastery test, heroes
    ============================================================ */
-const LS_KEY = "nathan_maths_v2";
+const LS_KEY = "nathan_maths_v3";
 const SET_SIZE = 20;   // practice
 const TEST_SIZE = 10;  // test de passage
 
 // ---- Chapters (each has ordered levels) ----
+// Recognition bands of 20: 1-20, 21-40, 41-60, 61-80, 81-100
+const BANDS = [{min:1,max:20},{min:21,max:40},{min:41,max:60},{min:61,max:80},{min:81,max:100}];
 const CHAPTERS = [
-  {id:"rec50",  name:"Reconnaître ≤ 50",  icon:"🔢", type:"rec", levels:[{min:1,max:50}]},
-  {id:"rec100", name:"Reconnaître 50–100",icon:"💯", type:"rec", levels:[{min:50,max:100}]},
-  {id:"add",    name:"Additions",         icon:"➕", type:"add",
+  {id:"audio", name:"Écoute les nombres", icon:"🔊", type:"audio", levels:BANDS},
+  {id:"seq",   name:"Nombre manquant",    icon:"❓", type:"seq",   levels:BANDS},
+  {id:"add",   name:"Additions",          icon:"➕", type:"add",
      levels:[{max:5},{max:10},{max:15},{max:20}]},
-  {id:"sub",    name:"Soustractions",     icon:"➖", type:"sub",
+  {id:"sub",   name:"Soustractions",      icon:"➖", type:"sub",
      levels:[{max:10},{max:20}]},
 ];
 
-// ---- Heroes (one per global level, in chapter order) ----
+// ---- Dinosaures (un nouveau à débloquer par niveau réussi, dans l'ordre des chapitres) ----
 const HEROES = [
-  {id:"renard", name:"Renard Éclair", emoji:"🦊", color:"#f59e0b", power:"la vitesse"},
-  {id:"lion",   name:"Lion Tonnerre", emoji:"🦁", color:"#eab308", power:"le courage"},
-  {id:"ours",   name:"Ours Costaud",  emoji:"🐻", color:"#b45309", power:"la force"},
-  {id:"tigre",  name:"Tigre Turbo",   emoji:"🐯", color:"#f97316", power:"la rapidité"},
-  {id:"panda",  name:"Panda Malin",   emoji:"🐼", color:"#10b981", power:"l'intelligence"},
-  {id:"lapin",  name:"Lapin Fusée",   emoji:"🐰", color:"#3b82f6", power:"le grand saut"},
-  {id:"hibou",  name:"Hibou Sage",    emoji:"🦉", color:"#8b5cf6", power:"la sagesse"},
-  {id:"dauphin",name:"Dauphin Flash", emoji:"🐬", color:"#06b6d4", power:"la nage"},
-  {id:"aigle",  name:"Aigle Royal",   emoji:"🦅", color:"#0ea5e9", power:"le vol"},
-  {id:"loup",   name:"Loup Mystère",  emoji:"🐺", color:"#6366f1", power:"le mystère"},
+  {id:"trex",     name:"Tyrannosaure", emoji:"🦖", color:"#ef4444", power:"le plus féroce"},
+  {id:"diplo",    name:"Diplodocus",   emoji:"🦕", color:"#22c55e", power:"le très long cou"},
+  {id:"tricera",  name:"Tricératops",  emoji:"🦖", color:"#f97316", power:"ses trois cornes"},
+  {id:"stego",    name:"Stégosaure",   emoji:"🦕", color:"#eab308", power:"les plaques sur le dos"},
+  {id:"raptor",   name:"Vélociraptor", emoji:"🦎", color:"#14b8a6", power:"le plus rapide"},
+  {id:"brachio",  name:"Brachiosaure", emoji:"🦕", color:"#3b82f6", power:"le plus grand"},
+  {id:"ptera",    name:"Ptéranodon",   emoji:"🦅", color:"#0ea5e9", power:"il vole dans le ciel"},
+  {id:"spino",    name:"Spinosaure",   emoji:"🦖", color:"#6366f1", power:"la voile sur le dos"},
+  {id:"anky",     name:"Ankylosaure",  emoji:"🦕", color:"#84cc16", power:"la massue au bout de la queue"},
+  {id:"allo",     name:"Allosaure",    emoji:"🦖", color:"#f59e0b", power:"un grand chasseur"},
+  {id:"para",     name:"Parasaurolophus", emoji:"🦕", color:"#ec4899", power:"sa crête qui fait du bruit"},
+  {id:"iguano",   name:"Iguanodon",    emoji:"🦕", color:"#10b981", power:"son pouce pointu"},
+  {id:"ptero",    name:"Ptérodactyle", emoji:"🦅", color:"#38bdf8", power:"ses petites ailes"},
+  {id:"mosa",     name:"Mosasaure",    emoji:"🐊", color:"#0891b2", power:"le roi des mers"},
+  {id:"compso",   name:"Compsognathus",emoji:"🦎", color:"#a3e635", power:"le plus petit"},
+  {id:"galli",    name:"Gallimimus",   emoji:"🦖", color:"#fb923c", power:"il court comme l'autruche"},
+  {id:"carno",    name:"Carnotaure",   emoji:"🦖", color:"#dc2626", power:"ses cornes de taureau"},
+  {id:"dilo",     name:"Dilophosaure", emoji:"🦖", color:"#7c3aed", power:"ses deux crêtes"},
 ];
 
 // ---- State ----
 const defaultState = () => {
   const chapters={};
-  CHAPTERS.forEach(c=> chapters[c.id]={levelIdx:0, readyTest:false});
+  CHAPTERS.forEach(c=> chapters[c.id]={levelIdx:0, readyTest:false, goodCount:0});
   return {
     stars:0, streak:0, lastPlayed:null,
     settings:{sound:true},
@@ -466,25 +489,24 @@ function genCalc(op, max){
   else        { a=rnd(max)+1; b=rnd(a+1); }
   return {kind:"calc", a, b, op, answer: op==="+" ? a+b : a-b};
 }
-function genRec(min, max){
-  if(Math.random()<0.5){
-    const n = min + rnd(max-min+1);
-    return {kind:"audio", n, answer:n};
-  } else {
-    // ascending sequence of 4, step 1, one hidden
-    let start = min + rnd(Math.max(1,(max-min-2)));
-    if(start+3>max) start=max-3;
-    if(start<min) start=min;
-    const seq=[start,start+1,start+2,start+3];
-    const hide=rnd(4);
-    const answer=seq[hide];
-    const shown=seq.map((v,i)=> i===hide ? null : v);
-    return {kind:"missing", seq:shown, answer};
-  }
+function genAudio(min, max){
+  const n = min + rnd(max-min+1);
+  return {kind:"audio", n, answer:n};
+}
+function genSeq(min, max){
+  // ascending sequence of 5 consecutive numbers within [min,max], one hidden in the middle
+  let start = min + rnd(Math.max(1, max-min-3));
+  if(start+4>max) start=max-4;
+  if(start<min) start=min;
+  const seq=[start,start+1,start+2,start+3,start+4];
+  const hide=1+rnd(3);            // hide position 1..3 -> always context on both sides
+  const answer=seq[hide];
+  return {kind:"missing", seq:seq.map((v,i)=> i===hide ? null : v), answer};
 }
 function genProblem(chap, level){
-  if(chap.type==="rec") return genRec(level.min, level.max);
-  if(chap.type==="sub") return genCalc("-", level.max);
+  if(chap.type==="audio") return genAudio(level.min, level.max);
+  if(chap.type==="seq")   return genSeq(level.min, level.max);
+  if(chap.type==="sub")   return genCalc("-", level.max);
   return genCalc("+", level.max);
 }
 function factKey(p){
@@ -525,7 +547,7 @@ function drawProblem(){
     box.innerHTML = `<div class="equation"><span>${p.a}</span><span>${p.op}</span><span>${p.b}</span><span>=</span>${entryHTML()}</div><div class="feedback" id="feedback"></div>`;
   } else if(p.kind==="missing"){
     const parts=p.seq.map(v=> v===null ? entryHTML() : `<span class="seqnum">${v}</span>`).join("");
-    box.innerHTML = `<div class="instr">Quel nombre manque ?</div><div class="equation">${parts}</div><div class="feedback" id="feedback"></div>`;
+    box.innerHTML = `<div class="instr">Quel nombre manque ?</div><div class="equation seqeq">${parts}</div><div class="feedback" id="feedback"></div>`;
   } else { // audio
     box.innerHTML = `<div class="instr">Écoute et écris le nombre</div>
       <button class="replay" id="replayBtn">🔊 Écouter</button>
@@ -602,9 +624,12 @@ function finishPractice(){
   const total=session.size, acc=session.good/total;
   S.totals.sets++; S.totals.problems+=total; S.totals.firstTry+=session.good;
   bumpStreak();
-  // unlock test if practiced well at current level
+  // unlock test after 3 practices ≥75% at the current level
   const ch=S.chapters[session.chapId];
-  if(session.levelIdx===ch.levelIdx && acc>=0.75) ch.readyTest=true;
+  if(session.levelIdx===ch.levelIdx && acc>=0.75){
+    ch.goodCount=(ch.goodCount||0)+1;
+    if(ch.goodCount>=3) ch.readyTest=true;
+  }
   S.history.unshift({date:todayStr(), chap:session.chapId, type:"Entraîn.", score:`${session.good}/${total}`});
   trimHistory();
   let stars = acc>=0.9?3 : acc>=0.7?2 : 1; S.stars+=stars;
@@ -617,7 +642,7 @@ function finishPractice(){
   $("statTime").textContent = Math.round(session.totalMs/1000)+"s";
   $("endMsg").textContent = ch.readyTest
     ? "Tu es prêt pour le test de passage ! 🏅"
-    : "Encore un peu d'entraînement et tu pourras passer le test.";
+    : `Entraînements réussis : ${ch.goodCount||0} / 3 pour débloquer le test.`;
   if(stars>=2) confetti();
 }
 
@@ -634,7 +659,7 @@ function finishTest(){
     const hi=heroIndexFor(session.chapId, session.levelIdx);
     const hero=HEROES[hi];
     if(hero && !S.heroes.includes(hero.id)) S.heroes.push(hero.id);
-    ch.levelIdx++; ch.readyTest=false;
+    ch.levelIdx++; ch.readyTest=false; ch.goodCount=0;
     S.stars+=5;
     save();
     showLevelUp(hero, session.chapId);
@@ -659,14 +684,14 @@ function trimHistory(){ if(S.history.length>40) S.history.length=40; }
 // ---------- Level-up overlay ----------
 function showLevelUp(hero, chapId){
   $("levelupHero").innerHTML = hero ? heroSVG(hero,150,true) : "🎉";
-  $("levelupName").textContent = hero ? "Nouveau héros : "+hero.name+" !" : "Nouveau niveau !";
-  $("levelupPower").textContent = hero ? "Son pouvoir : "+hero.power : "";
+  $("levelupName").textContent = hero ? "Nouveau dinosaure : "+hero.name+" !" : "Nouveau niveau !";
+  $("levelupPower").textContent = hero ? "Ce qu'il a de spécial : "+hero.power : "";
   const ch=S.chapters[chapId], chap=chapObj(chapId);
   $("levelupTitle").textContent = ch.levelIdx>=chap.levels.length
     ? "Chapitre terminé, Nathan !" : "Bravo Nathan !";
   $("levelupOv").classList.remove("hidden");
   beep("win"); confetti();
-  setTimeout(()=>speakText("Bravo Nathan ! Tu as gagné un nouveau héros !"), 350);
+  setTimeout(()=>speakText("Bravo Nathan ! Tu as gagné un nouveau dinosaure !"), 350);
 }
 
 // ---------- Confetti ----------
@@ -720,7 +745,7 @@ function chapterProgressText(c){
 function renderHome(){
   refreshTop();
   $("rankLine").innerHTML = S.heroes.length
-    ? `Héros : <b>${S.heroes.length}/${HEROES.length}</b> 🦸`
+    ? `Dinosaures : <b>${S.heroes.length}/${totalLevels()}</b> 🦕`
     : "Choisis un chapitre 👇";
   const wrap=$("chapters"); wrap.innerHTML="";
   CHAPTERS.forEach(c=>{
@@ -744,31 +769,59 @@ function renderHome(){
   });
 }
 
-let curChap=null;
-function openChapter(id){
-  curChap=id; const c=chapObj(id), ch=S.chapters[id];
-  const done = ch.levelIdx>=c.levels.length;
+let curChap=null, selectedLevel=0;
+function rangeLabel(c, lvl){
+  return (c.type==="add"||c.type==="sub") ? "≤ "+lvl.max : lvl.min+"–"+lvl.max;
+}
+function openChapter(id, keepSel){
+  const c=chapObj(id), ch=S.chapters[id];
+  const maxSel=Math.min(ch.levelIdx, c.levels.length-1);
+  if(id!==curChap || !keepSel || selectedLevel>maxSel) selectedLevel=maxSel;
+  curChap=id;
   showScreen("chapter");
+  renderChapter();
+}
+function renderChapter(){
+  const id=curChap, c=chapObj(id), ch=S.chapters[id];
+  const done = ch.levelIdx>=c.levels.length;
   $("chapTitle").textContent = c.icon+" "+c.name;
-  $("chapLevel").textContent = done ? "Chapitre terminé 🏆"
-      : "Niveau "+(ch.levelIdx+1)+" / "+c.levels.length;
-  // hero preview for current/just-earned
-  const hi = heroIndexFor(id, Math.min(ch.levelIdx, c.levels.length-1));
-  const hero=HEROES[hi];
-  const unlocked = done || ch.levelIdx>0 ? null : null;
-  const nextUnlocked = S.heroes.includes(hero.id);
-  $("chapHero").innerHTML = `${heroSVG(hero,110,nextUnlocked)}
-      <div class="heroName">${nextUnlocked?hero.name:"Héros à débloquer"}</div>
-      <div class="heroPower">${done?"Tous les niveaux réussis !":"Réussis le test pour le gagner"}</div>`;
-  $("chapDots").innerHTML = c.levels.map((_,i)=>{
-    const cls=i<ch.levelIdx?"dot done":(i===ch.levelIdx&&!done?"dot cur":"dot");
-    return `<span class="${cls}"></span>`;}).join("");
-  $("trainBtn").classList.toggle("hidden", done);
-  $("testBtn").classList.toggle("hidden", done);
-  $("testBtn").disabled = !ch.readyTest;
-  $("testHint").textContent = done ? "Bravo, tout est réussi ! 🏆"
-      : ch.readyTest ? "Prêt ! 10 sur 10 pour gagner le héros."
-      : "Entraîne-toi d'abord pour débloquer le test 💪";
+
+  // level picker
+  const lp=$("chapLevels"); lp.innerHTML="";
+  c.levels.forEach((lvl,i)=>{
+    const passed=i<ch.levelIdx, locked=i>ch.levelIdx;
+    const b=document.createElement("button");
+    b.className="lvbtn"+(i===selectedLevel?" sel":"")+(passed?" done":"")+(locked?" locked":"");
+    b.innerHTML=`<span>${locked?"🔒 ":""}Niv. ${i+1}${passed?" ✓":""}</span><span class="rg">${rangeLabel(c,lvl)}</span>`;
+    if(!locked) b.addEventListener("click",()=>{ selectedLevel=i; renderChapter(); });
+    lp.appendChild(b);
+  });
+
+  const sel=c.levels[selectedLevel];
+  $("chapLevel").textContent = "Niveau "+(selectedLevel+1)+" / "+c.levels.length+"  ("+rangeLabel(c,sel)+")";
+
+  // dinosaur preview for the SELECTED level
+  const hero=HEROES[heroIndexFor(id, selectedLevel)];
+  const un=S.heroes.includes(hero.id);
+  $("chapHero").innerHTML = `${heroSVG(hero,104,un)}
+      <div class="heroName">${un?hero.name:"Dinosaure à débloquer"}</div>
+      <div class="heroPower">${un?("Spécial : "+hero.power):"Réussis le test pour le gagner"}</div>`;
+
+  // buttons depend on whether the selected level is the current (advancing) one
+  const isCurrent = (selectedLevel===ch.levelIdx) && !done;
+  $("trainBtn").classList.remove("hidden");
+  if(isCurrent){
+    $("testBtn").classList.remove("hidden");
+    $("testBtn").disabled=!ch.readyTest;
+    $("testHint").textContent = ch.readyTest
+      ? "Prêt ! 10 sur 10 pour gagner le dinosaure."
+      : `Entraînements réussis : ${ch.goodCount||0} / 3 pour débloquer le test 💪`;
+  } else {
+    $("testBtn").classList.add("hidden");
+    $("testHint").textContent = (selectedLevel<ch.levelIdx)
+      ? "Niveau déjà réussi ✓ — entraînement libre."
+      : "";
+  }
 }
 
 // ---------- Gallery ----------
@@ -835,8 +888,8 @@ function renderParent(){
     const minus=document.createElement("button"); minus.className="mini"; minus.textContent="−";
     const tag=document.createElement("span"); tag.className="tag"; tag.textContent=Math.min(ch.levelIdx+1,c.levels.length);
     const plus=document.createElement("button"); plus.className="mini"; plus.textContent="+";
-    minus.onclick=()=>{ if(ch.levelIdx>0){ch.levelIdx--; ch.readyTest=false; save(); renderParent();} };
-    plus.onclick =()=>{ if(ch.levelIdx<c.levels.length){ch.levelIdx++; ch.readyTest=false; save(); renderParent();} };
+    minus.onclick=()=>{ if(ch.levelIdx>0){ch.levelIdx--; ch.readyTest=false; ch.goodCount=0; save(); renderParent();} };
+    plus.onclick =()=>{ if(ch.levelIdx<c.levels.length){ch.levelIdx++; ch.readyTest=false; ch.goodCount=0; save(); renderParent();} };
     mw.appendChild(minus); mw.appendChild(tag); mw.appendChild(plus);
     r.appendChild(mw); pc.appendChild(r);
   });
@@ -861,11 +914,12 @@ function fmtDate(d){ const p=d.split("-"); return p[2]+"/"+p[1]; }
 buildKeypad("keypad", pressKey);
 buildKeypad("gateKeypad", gateKey);
 
+$("homeBtn").addEventListener("click", ()=>{ try{speechSynthesis.cancel();}catch(e){} session=null; showScreen("home"); });
 $("chapBack").addEventListener("click", ()=>showScreen("home"));
-$("trainBtn").addEventListener("click", ()=>{ const ch=S.chapters[curChap]; startSession(curChap, ch.levelIdx, "train"); });
-$("testBtn").addEventListener("click", ()=>{ const ch=S.chapters[curChap]; if(ch.readyTest) startSession(curChap, ch.levelIdx, "test"); });
-$("endBackBtn").addEventListener("click", ()=>openChapter(session.chapId));
-$("failBackBtn").addEventListener("click", ()=>openChapter(session.chapId));
+$("trainBtn").addEventListener("click", ()=>startSession(curChap, selectedLevel, "train"));
+$("testBtn").addEventListener("click", ()=>{ const ch=S.chapters[curChap]; if(selectedLevel===ch.levelIdx && ch.readyTest) startSession(curChap, ch.levelIdx, "test"); });
+$("endBackBtn").addEventListener("click", ()=>openChapter(session.chapId, true));
+$("failBackBtn").addEventListener("click", ()=>openChapter(session.chapId, true));
 $("failTrainBtn").addEventListener("click", ()=>{ const ch=S.chapters[session.chapId]; startSession(session.chapId, ch.levelIdx, "train"); });
 $("levelupBtn").addEventListener("click", ()=>{ $("levelupOv").classList.add("hidden"); openChapter(session.chapId); });
 
@@ -888,9 +942,16 @@ document.addEventListener("dblclick", e=>e.preventDefault(), {passive:false});
 refreshTop();
 showScreen("home");
 
-if("serviceWorker" in navigator && location.protocol.startsWith("http")){
-  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
-}
+(function(){
+  if(!("serviceWorker" in navigator)) return;
+  const h=location.hostname, isLocal = h==="localhost"||h==="127.0.0.1";
+  if(isLocal){
+    // dev: never cache, so every reload shows the latest
+    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+  } else if(location.protocol.startsWith("http")){
+    window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  }
+})();
 </script>
 </body>
 </html>
