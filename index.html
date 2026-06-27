@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Maths de Nathan">
+<meta name="theme-color" content="#2b6cb0">
+<title>Maths de Nathan</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root{
+    --bg:#eef5fb; --card:#ffffff; --ink:#1a2733; --muted:#6b7d8d;
+    --blue:#2b6cb0; --blue-d:#1e4e80; --green:#36b37e; --green-d:#268a60;
+    --amber:#f5a623; --red:#e8635a; --soft:#dbe8f5;
+    --shadow:0 10px 30px rgba(31,72,128,.15);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+    -webkit-user-select:none; user-select:none; overflow:hidden;
+    overscroll-behavior:none; touch-action:manipulation;
+  }
+  .app{height:100%;height:100dvh;display:flex;flex-direction:column;
+    max-width:760px;margin:0 auto;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);}
+  .hidden{display:none !important;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;gap:8px;}
+  .pill{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:700;
+    box-shadow:var(--shadow);display:flex;align-items:center;gap:6px;font-size:16px;}
+  .iconbtn{width:46px;height:46px;border-radius:50%;border:none;background:var(--card);
+    box-shadow:var(--shadow);font-size:22px;display:flex;align-items:center;justify-content:center;}
+  .iconbtn:active{transform:scale(.92);}
+
+  /* ---------- Screens ---------- */
+  .screen{flex:1;display:flex;flex-direction:column;min-height:0;}
+  .center{justify-content:center;align-items:center;text-align:center;gap:18px;}
+
+  h1{font-size:34px;margin:0;}
+  .sub{color:var(--muted);font-size:19px;margin:0;}
+
+  .bigbtn{border:none;border-radius:26px;padding:22px 30px;font-size:26px;font-weight:800;
+    color:#fff;background:var(--blue);box-shadow:0 8px 0 var(--blue-d);min-width:240px;}
+  .bigbtn:active{transform:translateY(5px);box-shadow:0 3px 0 var(--blue-d);}
+  .bigbtn.green{background:var(--green);box-shadow:0 8px 0 var(--green-d);}
+  .ghostbtn{border:2px solid var(--soft);background:var(--card);color:var(--blue);
+    border-radius:20px;padding:14px 22px;font-size:18px;font-weight:700;}
+  .ghostbtn:active{transform:scale(.96);}
+
+  .mascot{font-size:84px;line-height:1;}
+  .levelchip{background:var(--soft);color:var(--blue-d);border-radius:999px;
+    padding:8px 16px;font-weight:700;font-size:16px;}
+
+  /* ---------- Practice ---------- */
+  .progresswrap{padding:6px 4px 0;}
+  .pbar{height:14px;background:var(--soft);border-radius:999px;overflow:hidden;}
+  .pfill{height:100%;width:0;background:linear-gradient(90deg,var(--green),#5fd0a0);
+    border-radius:999px;transition:width .35s ease;}
+  .pcount{text-align:center;color:var(--muted);font-weight:700;margin-top:6px;font-size:15px;}
+
+  .problem{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0;}
+  .equation{font-size:13vh;font-weight:800;letter-spacing:2px;line-height:1;
+    display:flex;align-items:center;gap:.18em;}
+  @media(min-width:760px){.equation{font-size:96px;}}
+  .answerbox{min-width:1.4em;min-height:1.05em;border-bottom:8px solid var(--blue);
+    text-align:center;color:var(--blue);padding:0 .1em;}
+  .answerbox.empty{color:#b9c9d8;}
+  .feedback{height:42px;font-size:24px;font-weight:800;margin-top:10px;}
+  .feedback.ok{color:var(--green);}
+  .feedback.no{color:var(--amber);}
+
+  /* shake + pop */
+  @keyframes shake{10%,90%{transform:translateX(-3px)}20%,80%{transform:translateX(5px)}
+    30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
+  .shake{animation:shake .5s;}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+  .pop{animation:pop .3s;}
+
+  /* ---------- Keypad ---------- */
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 0 6px;}
+  .key{border:none;border-radius:18px;background:var(--card);box-shadow:var(--shadow);
+    font-size:32px;font-weight:800;color:var(--ink);padding:18px 0;}
+  .key:active{transform:scale(.94);background:#f1f6fb;}
+  .key.del{color:var(--red);font-size:26px;}
+  .key.ok{background:var(--green);color:#fff;box-shadow:0 6px 0 var(--green-d);font-size:28px;}
+  .key.ok:active{transform:translateY(3px);box-shadow:0 3px 0 var(--green-d);}
+
+  /* ---------- End / reward ---------- */
+  .stars{font-size:54px;letter-spacing:6px;}
+  .statrow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .stat{background:var(--card);border-radius:20px;box-shadow:var(--shadow);
+    padding:16px 20px;min-width:130px;}
+  .stat .big{font-size:30px;font-weight:800;}
+  .stat .lbl{color:var(--muted);font-size:14px;font-weight:600;}
+  .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;}
+  .confetti i{position:absolute;top:-20px;font-size:24px;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.9;}}
+
+  /* ---------- Parent ---------- */
+  .sheet{position:fixed;inset:0;background:rgba(20,40,60,.5);display:flex;
+    align-items:flex-end;justify-content:center;z-index:50;}
+  .sheetcard{background:var(--card);width:100%;max-width:760px;max-height:92vh;overflow:auto;
+    border-radius:28px 28px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));}
+  .sheetcard h2{margin:.2em 0 .6em;}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:14px 0;border-bottom:1px solid #eef2f6;}
+  .row:last-child{border-bottom:none;}
+  .miniwrap{display:flex;gap:8px;align-items:center;}
+  .mini{border:none;width:42px;height:42px;border-radius:12px;background:var(--soft);
+    font-size:22px;font-weight:800;color:var(--blue-d);}
+  .mini:active{transform:scale(.9);}
+  .tag{background:var(--soft);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px;}
+  .switch{width:58px;height:34px;border-radius:999px;background:#cfe0f0;position:relative;border:none;}
+  .switch.on{background:var(--green);}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:28px;height:28px;
+    border-radius:50%;background:#fff;transition:left .2s;}
+  .switch.on::after{left:27px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #eef2f6;}
+  th{color:var(--muted);font-weight:700;}
+  .danger{color:var(--red);font-weight:700;background:none;border:2px solid var(--red);
+    border-radius:14px;padding:10px 16px;}
+  .keypin{display:grid;grid-template-columns:repeat(3,70px);gap:10px;justify-content:center;margin-top:10px;}
+  .small{font-size:14px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="pill" id="streakPill">🔥 <span id="streakNum">0</span></div>
+    <div class="pill" id="starPill">⭐ <span id="starNum">0</span></div>
+    <button class="iconbtn" id="soundBtn" title="Son">🔊</button>
+    <button class="iconbtn" id="parentBtn" title="Parent">⚙️</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen center" id="homeScreen">
+    <div class="mascot">🦊</div>
+    <h1>Bonjour Nathan !</h1>
+    <p class="sub" id="homeSub">Prêt pour ton entraînement ?</p>
+    <div class="levelchip" id="homeLevel">Niveau 1</div>
+    <button class="bigbtn green" id="startBtn">Commencer ▶</button>
+    <button class="ghostbtn hidden" id="againBtn">M'entraîner encore</button>
+  </div>
+
+  <!-- PRACTICE -->
+  <div class="screen hidden" id="playScreen">
+    <div class="progresswrap">
+      <div class="pbar"><div class="pfill" id="pfill"></div></div>
+      <div class="pcount" id="pcount">1 / 20</div>
+    </div>
+    <div class="problem">
+      <div class="equation" id="equation"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+  </div>
+
+  <!-- END -->
+  <div class="screen center hidden" id="endScreen">
+    <div class="mascot" id="endMascot">🎉</div>
+    <h1 id="endTitle">Super, Nathan !</h1>
+    <div class="stars" id="endStars">⭐⭐⭐</div>
+    <div class="statrow">
+      <div class="stat"><div class="big" id="statGood">0</div><div class="lbl">bonnes du 1er coup</div></div>
+      <div class="stat"><div class="big" id="statTime">0s</div><div class="lbl">temps total</div></div>
+      <div class="stat"><div class="big" id="statSpeed">0s</div><div class="lbl">par question</div></div>
+    </div>
+    <p class="sub" id="endMsg"></p>
+    <button class="bigbtn" id="endHomeBtn">Continuer</button>
+  </div>
+
+</div>
+
+<!-- Parent gate -->
+<div class="sheet hidden" id="gateSheet">
+  <div class="sheetcard" style="max-width:420px;border-radius:28px;margin:auto;">
+    <h2>Espace parent 🔒</h2>
+    <p class="small">Pour les grands : combien font <b id="gateQ">7 × 8</b> ?</p>
+    <div class="equation" style="font-size:48px;justify-content:center;margin:8px 0;">
+      <span class="answerbox empty" id="gateAns" style="border-bottom-color:var(--muted);color:var(--ink);">?</span>
+    </div>
+    <div class="keypin" id="gateKeypad"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="ghostbtn" style="flex:1" id="gateCancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Parent dashboard -->
+<div class="sheet hidden" id="parentSheet">
+  <div class="sheetcard">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Espace parent</h2>
+      <button class="iconbtn" id="parentClose">✕</button>
+    </div>
+
+    <div class="row">
+      <div><b>Niveau de Nathan</b><br><span class="small" id="pLevelName">—</span></div>
+      <div class="miniwrap">
+        <button class="mini" id="lvlDown">−</button>
+        <span class="tag" id="pLevelNum">1</span>
+        <button class="mini" id="lvlUp">+</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div><b>Avancement automatique</b><br><span class="small">Monte de niveau quand il est rapide et juste</span></div>
+      <button class="switch on" id="autoSwitch"></button>
+    </div>
+
+    <div class="row">
+      <div><b>Son</b></div>
+      <button class="switch on" id="soundSwitch"></button>
+    </div>
+
+    <div class="row" style="display:block;">
+      <b>Résumé</b>
+      <div class="statrow" style="justify-content:flex-start;margin-top:10px;">
+        <div class="stat"><div class="big" id="sumDays">0</div><div class="lbl">jours de suite</div></div>
+        <div class="stat"><div class="big" id="sumSets">0</div><div class="lbl">séances</div></div>
+        <div class="stat"><div class="big" id="sumProblems">0</div><div class="lbl">exercices</div></div>
+        <div class="stat"><div class="big" id="sumAcc">—</div><div class="lbl">justesse moy.</div></div>
+      </div>
+    </div>
+
+    <div class="row" style="display:block;">
+      <b>Faits difficiles</b>
+      <div class="small">Ce qui le ralentit le plus — à réviser.</div>
+      <table id="weakTable" style="margin-top:8px;"><tbody><tr><td class="small">Pas encore de données.</td></tr></tbody></table>
+    </div>
+
+    <div class="row" style="display:block;">
+      <b>Dernières séances</b>
+      <table id="histTable" style="margin-top:8px;">
+        <thead><tr><th>Date</th><th>Niveau</th><th>Justesse</th><th>/ question</th></tr></thead>
+        <tbody><tr><td class="small" colspan="4">Aucune séance.</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="row">
+      <div><b>Réinitialiser</b><br><span class="small">Efface toute la progression</span></div>
+      <button class="danger" id="resetBtn">Effacer</button>
+    </div>
+    <p class="small" style="text-align:center;margin-top:8px;">Maths de Nathan • fonctionne hors-ligne</p>
+  </div>
+</div>
+
+<div class="confetti hidden" id="confetti"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Maths de Nathan — Kumon-style daily practice (single file PWA)
+   ============================================================ */
+
+const LS_KEY = "nathan_maths_v1";
+const SET_SIZE = 20;
+
+// Levels: mastery-gated progression
+const LEVELS = [
+  {id:1, name:"Additions jusqu'à 10",      op:"+", max:10,  thr:5000},
+  {id:2, name:"Additions jusqu'à 20",      op:"+", max:20,  thr:7000},
+  {id:3, name:"Soustractions jusqu'à 10",  op:"-", max:10,  thr:6000},
+  {id:4, name:"Soustractions jusqu'à 20",  op:"-", max:20,  thr:8000},
+  {id:5, name:"Additions et soustractions",op:"±", max:20,  thr:8000},
+];
+const ACC_THRESHOLD = 0.9;   // ≥90% bonnes du 1er coup
+const PASS_NEEDED   = 0.85;  // proportion of problems answered fast enough
+
+// ---------- State ----------
+const defaultState = () => ({
+  level:1, stars:0, streak:0, lastPlayed:null,
+  settings:{sound:true, autoLevel:true},
+  totals:{sets:0, problems:0, firstTry:0},
+  facts:{},        // "8+9": {seen, wrong}
+  history:[],      // {date, level, good, total, totalMs, avgMs}
+});
+let S = load();
+function load(){
+  try{ const r = JSON.parse(localStorage.getItem(LS_KEY));
+       if(r && r.level) return Object.assign(defaultState(), r); }catch(e){}
+  return defaultState();
+}
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+
+// ---------- Helpers ----------
+const $ = id => document.getElementById(id);
+const todayStr = () => new Date().toISOString().slice(0,10);
+function rnd(n){ return Math.floor(Math.random()*n); }
+function levelObj(id){ return LEVELS.find(l=>l.id===id) || LEVELS[0]; }
+
+// ---------- Sound (WebAudio, no assets) ----------
+let actx=null;
+function beep(type){
+  if(!S.settings.sound) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const seq = type==="ok" ? [[660,0],[880,.09]]
+              : type==="win" ? [[523,0],[659,.1],[784,.2],[1046,.32]]
+              : [[300,0],[230,.08]]; // "no"
+    seq.forEach(([f,t])=>{
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type = type==="no" ? "triangle":"sine"; o.frequency.value=f;
+      const s=actx.currentTime+t;
+      g.gain.setValueAtTime(0,s); g.gain.linearRampToValueAtTime(.25,s+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,s+.18);
+      o.connect(g); g.connect(actx.destination); o.start(s); o.stop(s+.2);
+    });
+  }catch(e){}
+}
+
+// ---------- Problem generation ----------
+function genProblem(){
+  const L = levelObj(S.level);
+  let op = L.op;
+  if(op==="±") op = Math.random()<.5 ? "+" : "-";
+
+  // 30% chance: re-inject a known weak fact for this op/level
+  const weak = pickWeakFact(op, L.max);
+  if(weak) return weak;
+
+  let a,b;
+  if(op==="+"){
+    a = rnd(L.max+1);
+    b = rnd(L.max - a + 1);
+  }else{
+    a = rnd(L.max) + 1;        // 1..max
+    b = rnd(a + 1);            // 0..a  -> non-negative result
+  }
+  return {a,b,op,answer: op==="+" ? a+b : a-b};
+}
+function factKey(p){ return `${p.a}${p.op}${p.b}`; }
+function pickWeakFact(op, max){
+  if(Math.random()>0.3) return null;
+  const cands = Object.entries(S.facts)
+    .filter(([k,v])=> k.includes(op) && v.wrong>0)
+    .map(([k])=>k);
+  if(!cands.length) return null;
+  const key = cands[rnd(cands.length)];
+  const m = key.match(/^(\d+)([+\-])(\d+)$/);
+  if(!m) return null;
+  const a=+m[1], b=+m[3], o=m[2];
+  if(a>max || b>max) return null;
+  return {a,b,op:o,answer: o==="+" ? a+b : a-b};
+}
+
+// ---------- Session ----------
+let session=null;
+function startSession(){
+  const problems=[];
+  for(let i=0;i<SET_SIZE;i++) problems.push(genProblem());
+  session={problems, idx:0, entry:"", attempts:0,
+           good:0, totalMs:0, qStart:0, locked:false};
+  showScreen("play");
+  renderProblem();
+}
+function renderProblem(){
+  const p=session.problems[session.idx];
+  session.entry=""; session.attempts=0; session.qStart=performance.now();
+  $("pfill").style.width = (session.idx/SET_SIZE*100)+"%";
+  $("pcount").textContent = `${session.idx+1} / ${SET_SIZE}`;
+  $("feedback").textContent=""; $("feedback").className="feedback";
+  drawEquation();
+}
+function drawEquation(){
+  const p=session.problems[session.idx];
+  const shown = session.entry==="" ?
+    `<span class="answerbox empty">?</span>` :
+    `<span class="answerbox">${session.entry}</span>`;
+  $("equation").innerHTML =
+    `<span>${p.a}</span><span>${p.op}</span><span>${p.b}</span><span>=</span>${shown}`;
+}
+function pressKey(k){
+  if(session.locked) return;
+  if(k==="del"){ session.entry=session.entry.slice(0,-1); drawEquation(); return; }
+  if(k==="ok"){ submit(); return; }
+  if(session.entry.length>=3) return;
+  session.entry += k; drawEquation();
+}
+function submit(){
+  if(session.locked || session.entry==="") return;
+  const p=session.problems[session.idx];
+  session.attempts++;
+  const given=parseInt(session.entry,10);
+  const key=factKey(p);
+  S.facts[key] = S.facts[key] || {seen:0, wrong:0};
+  S.facts[key].seen++;
+
+  if(given===p.answer){
+    // correct
+    const ms=performance.now()-session.qStart;
+    session.totalMs += ms;
+    if(session.attempts===1){ session.good++; }
+    const fb=$("feedback"); fb.textContent="Bravo ! ✔"; fb.className="feedback ok";
+    $("equation").classList.add("pop");
+    beep("ok");
+    session.locked=true;
+    setTimeout(()=>{ $("equation").classList.remove("pop");
+      session.locked=false; nextProblem(); }, 520);
+  }else{
+    // Kumon: stay until correct
+    S.facts[key].wrong++;
+    const fb=$("feedback"); fb.textContent="Essaie encore 🙂"; fb.className="feedback no";
+    $("equation").classList.add("shake");
+    beep("no");
+    setTimeout(()=>$("equation").classList.remove("shake"),520);
+    session.entry=""; drawEquation();
+  }
+  save();
+}
+function nextProblem(){
+  session.idx++;
+  if(session.idx>=SET_SIZE){ finishSession(); return; }
+  renderProblem();
+}
+
+// ---------- Finish & mastery ----------
+function finishSession(){
+  $("pfill").style.width="100%";
+  const total=SET_SIZE;
+  const acc=session.good/total;
+  const avgMs=session.totalMs/total;
+  const L=levelObj(S.level);
+  const fastShare = avgMs <= L.thr ? 1 : (L.thr/avgMs);
+
+  // record
+  S.totals.sets++; S.totals.problems+=total; S.totals.firstTry+=session.good;
+  S.history.unshift({date:todayStr(), level:S.level, good:session.good,
+                     total, totalMs:Math.round(session.totalMs),
+                     avgMs:Math.round(avgMs)});
+  if(S.history.length>30) S.history.length=30;
+
+  // streak (count once per calendar day)
+  const t=todayStr();
+  if(S.lastPlayed!==t){
+    const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+    S.streak = (S.lastPlayed===y) ? S.streak+1 : 1;
+    S.lastPlayed=t;
+  }
+
+  // stars 1..3
+  let stars=1;
+  if(acc>=0.7) stars=2;
+  if(acc>=ACC_THRESHOLD && avgMs<=L.thr) stars=3;
+  S.stars += stars;
+
+  // auto level up
+  let leveledUp=false;
+  if(S.settings.autoLevel && acc>=ACC_THRESHOLD && avgMs<=L.thr && S.level<LEVELS.length){
+    S.level++; leveledUp=true;
+  }
+  save();
+  showEnd({acc, avgMs, stars, leveledUp});
+}
+function showEnd({acc, avgMs, stars, leveledUp}){
+  showScreen("end");
+  refreshTop();
+  $("endStars").textContent = "⭐".repeat(stars) + "☆".repeat(3-stars);
+  $("statGood").textContent = `${session.good}/${SET_SIZE}`;
+  $("statTime").textContent = Math.round(session.totalMs/1000)+"s";
+  $("statSpeed").textContent = (avgMs/1000).toFixed(1)+"s";
+  if(leveledUp){
+    $("endMascot").textContent="🚀";
+    $("endTitle").textContent="Nouveau niveau !";
+    $("endMsg").textContent = "Tu passes à : "+levelObj(S.level).name;
+  }else if(stars===3){
+    $("endMascot").textContent="🌟";
+    $("endTitle").textContent="Parfait, Nathan !";
+    $("endMsg").textContent = "Rapide et juste. Bravo !";
+  }else if(acc>=0.7){
+    $("endMascot").textContent="🎉";
+    $("endTitle").textContent="Super, Nathan !";
+    $("endMsg").textContent = "Encore un peu et tu montes de niveau.";
+  }else{
+    $("endMascot").textContent="💪";
+    $("endTitle").textContent="Bon travail !";
+    $("endMsg").textContent = "On s'entraîne encore demain.";
+  }
+  beep("win");
+  if(stars>=2 || leveledUp) confetti();
+}
+
+// ---------- Confetti ----------
+function confetti(){
+  const c=$("confetti"); c.classList.remove("hidden"); c.innerHTML="";
+  const emo=["⭐","🎉","🟦","🟩","🟨","✨","🦊"];
+  for(let i=0;i<40;i++){
+    const s=document.createElement("i");
+    s.textContent=emo[rnd(emo.length)];
+    s.style.left=rnd(100)+"%";
+    s.style.animationDuration=(1.6+Math.random()*1.6)+"s";
+    s.style.animationDelay=(Math.random()*0.6)+"s";
+    c.appendChild(s);
+  }
+  setTimeout(()=>c.classList.add("hidden"), 3200);
+}
+
+// ---------- Screens / UI ----------
+function showScreen(name){
+  ["home","play","end"].forEach(n=>$(n+"Screen").classList.toggle("hidden", n!==name));
+}
+function refreshTop(){
+  $("streakNum").textContent=S.streak;
+  $("starNum").textContent=S.stars;
+  $("soundBtn").textContent=S.settings.sound?"🔊":"🔇";
+}
+function refreshHome(){
+  refreshTop();
+  $("homeLevel").textContent="Niveau "+S.level+" — "+levelObj(S.level).name;
+  const done = S.lastPlayed===todayStr();
+  $("homeSub").textContent = done ? "Déjà fait aujourd'hui ✓ Bravo !" : "Prêt pour ton entraînement ?";
+  $("startBtn").classList.toggle("hidden", done);
+  $("againBtn").classList.toggle("hidden", !done);
+}
+
+// ---------- Keypad build ----------
+function buildKeypad(){
+  const kp=$("keypad"); kp.innerHTML="";
+  const layout=["1","2","3","4","5","6","7","8","9","del","0","ok"];
+  layout.forEach(k=>{
+    const b=document.createElement("button");
+    b.className="key"+(k==="del"?" del":k==="ok"?" ok":"");
+    b.textContent = k==="del" ? "⌫" : k==="ok" ? "✔" : k;
+    b.addEventListener("click",()=>pressKey(k));
+    kp.appendChild(b);
+  });
+}
+
+// ---------- Parent gate ----------
+let gateAnswer=0, gateEntry="";
+function openGate(){
+  const a=3+rnd(7), b=3+rnd(7); gateAnswer=a*b; gateEntry="";
+  $("gateQ").textContent=`${a} × ${b}`; $("gateAns").textContent="?";
+  $("gateSheet").classList.remove("hidden");
+}
+function buildGateKeypad(){
+  const kp=$("gateKeypad"); kp.innerHTML="";
+  ["1","2","3","4","5","6","7","8","9","del","0","ok"].forEach(k=>{
+    const b=document.createElement("button");
+    b.className="key"+(k==="del"?" del":k==="ok"?" ok":"");
+    b.textContent=k==="del"?"⌫":k==="ok"?"✔":k;
+    b.addEventListener("click",()=>{
+      if(k==="del") gateEntry=gateEntry.slice(0,-1);
+      else if(k==="ok"){
+        if(parseInt(gateEntry,10)===gateAnswer){ $("gateSheet").classList.add("hidden"); openParent(); }
+        else { gateEntry=""; $("gateAns").textContent="✗"; setTimeout(()=>$("gateAns").textContent="?",700); }
+        return;
+      } else if(gateEntry.length<3) gateEntry+=k;
+      $("gateAns").textContent = gateEntry===""?"?":gateEntry;
+    });
+    kp.appendChild(b);
+  });
+}
+
+// ---------- Parent dashboard ----------
+function openParent(){
+  renderParent();
+  $("parentSheet").classList.remove("hidden");
+}
+function renderParent(){
+  $("pLevelNum").textContent=S.level;
+  $("pLevelName").textContent=levelObj(S.level).name;
+  $("autoSwitch").classList.toggle("on", S.settings.autoLevel);
+  $("soundSwitch").classList.toggle("on", S.settings.sound);
+  $("sumDays").textContent=S.streak;
+  $("sumSets").textContent=S.totals.sets;
+  $("sumProblems").textContent=S.totals.problems;
+  $("sumAcc").textContent = S.totals.problems
+    ? Math.round(S.totals.firstTry/S.totals.problems*100)+"%" : "—";
+
+  // weak facts
+  const weak=Object.entries(S.facts).filter(([k,v])=>v.wrong>0)
+    .sort((a,b)=>b[1].wrong-a[1].wrong).slice(0,6);
+  const wt=$("weakTable").querySelector("tbody")||$("weakTable");
+  $("weakTable").innerHTML = "<tbody>"+(weak.length
+    ? weak.map(([k,v])=>{const m=k.match(/^(\d+)([+\-])(\d+)$/);
+        return `<tr><td><b>${m[1]} ${m[2]} ${m[3]}</b></td><td class="small">${v.wrong} erreur(s) / ${v.seen}</td></tr>`;}).join("")
+    : `<tr><td class="small">Pas encore de données.</td></tr>`)+"</tbody>";
+
+  // history
+  const hb = S.history.length
+    ? S.history.slice(0,10).map(h=>`<tr><td>${fmtDate(h.date)}</td><td>${h.level}</td>
+        <td>${Math.round(h.good/h.total*100)}%</td><td>${(h.avgMs/1000).toFixed(1)}s</td></tr>`).join("")
+    : `<tr><td class="small" colspan="4">Aucune séance.</td></tr>`;
+  $("histTable").querySelector("tbody").innerHTML=hb;
+}
+function fmtDate(d){ const p=d.split("-"); return p[2]+"/"+p[1]; }
+
+// ---------- Events ----------
+$("startBtn").addEventListener("click", startSession);
+$("againBtn").addEventListener("click", startSession);
+$("endHomeBtn").addEventListener("click", ()=>{ showScreen("home"); refreshHome(); });
+
+$("soundBtn").addEventListener("click", ()=>{ S.settings.sound=!S.settings.sound; save(); refreshTop(); if(S.settings.sound) beep("ok"); });
+
+// Parent gate: tap gear opens math gate
+$("parentBtn").addEventListener("click", openGate);
+$("gateCancel").addEventListener("click", ()=>$("gateSheet").classList.add("hidden"));
+$("parentClose").addEventListener("click", ()=>{ $("parentSheet").classList.add("hidden"); refreshHome(); });
+
+$("lvlUp").addEventListener("click", ()=>{ if(S.level<LEVELS.length){S.level++; save(); renderParent();} });
+$("lvlDown").addEventListener("click", ()=>{ if(S.level>1){S.level--; save(); renderParent();} });
+$("autoSwitch").addEventListener("click", ()=>{ S.settings.autoLevel=!S.settings.autoLevel; save(); renderParent(); });
+$("soundSwitch").addEventListener("click", ()=>{ S.settings.sound=!S.settings.sound; save(); renderParent(); refreshTop(); });
+$("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Effacer toute la progression de Nathan ?")){ S=defaultState(); save(); renderParent(); refreshTop(); refreshHome(); }
+});
+
+// Prevent double-tap zoom on iOS
+document.addEventListener("dblclick", e=>e.preventDefault(), {passive:false});
+
+// ---------- Init ----------
+buildKeypad();
+buildGateKeypad();
+refreshHome();
+showScreen("home");
+
+// Register service worker for full offline use (only over http/https)
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
