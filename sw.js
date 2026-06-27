@@ -1,5 +1,5 @@
 /* Service worker — app shell cache for full offline use */
-const CACHE = "maths-nathan-v1";
+const CACHE = "maths-nathan-v2";
 const ASSETS = [
   "./",
   "./index.html",
