@@ -434,6 +434,21 @@ function load(){
 }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
 
+// Rebuild the dinosaur collection from the levels already passed.
+// Keeps progress across collection changes (old ids -> current species) and
+// never makes Nathan redo what he has done. Idempotent.
+function reconcileHeroes(){
+  const valid = new Set(HEROES.map(h=>h.id));
+  const owned = new Set((S.heroes||[]).filter(id=>valid.has(id)));
+  CHAPTERS.forEach(c=>{
+    const ch=S.chapters[c.id]; if(!ch) return;
+    const passed=Math.min(ch.levelIdx||0, c.levels.length);
+    for(let i=0;i<passed;i++){ const h=HEROES[heroIndexFor(c.id,i)]; if(h) owned.add(h.id); }
+  });
+  S.heroes=[...owned];
+}
+reconcileHeroes(); save();
+
 const $ = id => document.getElementById(id);
 const todayStr = () => new Date().toISOString().slice(0,10);
 const rnd = n => Math.floor(Math.random()*n);
@@ -901,7 +916,12 @@ function renderParent(){
     const tag=document.createElement("span"); tag.className="tag"; tag.textContent=Math.min(ch.levelIdx+1,c.levels.length);
     const plus=document.createElement("button"); plus.className="mini"; plus.textContent="+";
     minus.onclick=()=>{ if(ch.levelIdx>0){ch.levelIdx--; ch.readyTest=false; ch.goodCount=0; save(); renderParent();} };
-    plus.onclick =()=>{ if(ch.levelIdx<c.levels.length){ch.levelIdx++; ch.readyTest=false; ch.goodCount=0; save(); renderParent();} };
+    plus.onclick =()=>{ if(ch.levelIdx<c.levels.length){
+      // advancing the level also grants that level's dinosaur (credit the child)
+      const hero=HEROES[heroIndexFor(c.id, ch.levelIdx)];
+      if(hero && !S.heroes.includes(hero.id)) S.heroes.push(hero.id);
+      ch.levelIdx++; ch.readyTest=false; ch.goodCount=0; save(); renderParent();
+    } };
     mw.appendChild(minus); mw.appendChild(tag); mw.appendChild(plus);
     r.appendChild(mw); pc.appendChild(r);
   });
