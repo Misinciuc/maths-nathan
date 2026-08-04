@@ -80,9 +80,15 @@
   /* ---------- Chapter detail ---------- */
   .backrow{display:flex;align-items:center;gap:10px;padding:6px 2px;}
   .levelbig{font-size:22px;font-weight:800;}
-  .heroPreview{display:flex;flex-direction:column;align-items:center;gap:6px;margin:8px 0;}
-  .heroName{font-weight:800;font-size:18px;}
-  .heroPower{color:var(--muted);font-size:14px;}
+  .heroPreview{display:flex;flex-direction:column;align-items:center;gap:8px;margin:8px 0;}
+  .heroName{font-weight:800;font-size:22px;}
+  .heroPower{color:var(--muted);font-size:15px;max-width:340px;}
+  .dinoframe{border-radius:22px;overflow:hidden;border:5px solid var(--dc,#334155);
+    box-shadow:var(--shadow);background:#0b1220;display:flex;align-items:center;justify-content:center;}
+  .dinoframe img{width:100%;height:100%;object-fit:cover;display:block;}
+  .dinoframe.locked{background:#e2e8f0;border-color:#cbd5e1;color:#94a3b8;border-style:dashed;}
+  .cheroimg{width:44px;height:44px;border-radius:12px;object-fit:cover;
+    border:2px solid var(--soft);}
   .levelpick{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:2px 0 4px;}
   .lvbtn{border:2px solid var(--soft);background:var(--card);border-radius:14px;
     padding:9px 12px;font-weight:800;font-size:15px;color:var(--ink);
@@ -377,25 +383,31 @@ const CHAPTERS = [
 ];
 
 // ---- Dinosaures (un nouveau à débloquer par niveau réussi, dans l'ordre des chapitres) ----
+// img = photo optimisée dans dinos/. Les 16 premiers sont utilisés (16 niveaux), le reste = réserve.
+const dino = (id,name,color,power) => ({id, name, img:"dinos/"+id+".jpg", color, power});
 const HEROES = [
-  {id:"trex",     name:"Tyrannosaure", emoji:"🦖", color:"#ef4444", power:"le plus féroce"},
-  {id:"diplo",    name:"Diplodocus",   emoji:"🦕", color:"#22c55e", power:"le très long cou"},
-  {id:"tricera",  name:"Tricératops",  emoji:"🦖", color:"#f97316", power:"ses trois cornes"},
-  {id:"stego",    name:"Stégosaure",   emoji:"🦕", color:"#eab308", power:"les plaques sur le dos"},
-  {id:"raptor",   name:"Vélociraptor", emoji:"🦎", color:"#14b8a6", power:"le plus rapide"},
-  {id:"brachio",  name:"Brachiosaure", emoji:"🦕", color:"#3b82f6", power:"le plus grand"},
-  {id:"ptera",    name:"Ptéranodon",   emoji:"🦅", color:"#0ea5e9", power:"il vole dans le ciel"},
-  {id:"spino",    name:"Spinosaure",   emoji:"🦖", color:"#6366f1", power:"la voile sur le dos"},
-  {id:"anky",     name:"Ankylosaure",  emoji:"🦕", color:"#84cc16", power:"la massue au bout de la queue"},
-  {id:"allo",     name:"Allosaure",    emoji:"🦖", color:"#f59e0b", power:"un grand chasseur"},
-  {id:"para",     name:"Parasaurolophus", emoji:"🦕", color:"#ec4899", power:"sa crête qui fait du bruit"},
-  {id:"iguano",   name:"Iguanodon",    emoji:"🦕", color:"#10b981", power:"son pouce pointu"},
-  {id:"ptero",    name:"Ptérodactyle", emoji:"🦅", color:"#38bdf8", power:"ses petites ailes"},
-  {id:"mosa",     name:"Mosasaure",    emoji:"🐊", color:"#0891b2", power:"le roi des mers"},
-  {id:"compso",   name:"Compsognathus",emoji:"🦎", color:"#a3e635", power:"le plus petit"},
-  {id:"galli",    name:"Gallimimus",   emoji:"🦖", color:"#fb923c", power:"il court comme l'autruche"},
-  {id:"carno",    name:"Carnotaure",   emoji:"🦖", color:"#dc2626", power:"ses cornes de taureau"},
-  {id:"dilo",     name:"Dilophosaure", emoji:"🦖", color:"#7c3aed", power:"ses deux crêtes"},
+  dino("tyrannosaure",     "Tyrannosaure",      "#ef4444", "le plus féroce des chasseurs"),
+  dino("triceratops",      "Tricératops",       "#f97316", "ses trois grandes cornes"),
+  dino("stegosaure",       "Stégosaure",        "#eab308", "les plaques sur son dos"),
+  dino("brachiosaure",     "Brachiosaure",      "#22c55e", "si grand qu'il touche les arbres"),
+  dino("spinosaure",       "Spinosaure",        "#6366f1", "la grande voile sur son dos"),
+  dino("velociraptor",     "Vélociraptor",      "#14b8a6", "rapide, rusé et couvert de plumes"),
+  dino("ankylosaure",      "Ankylosaure",       "#84cc16", "la massue au bout de sa queue"),
+  dino("diplodocus",       "Diplodocus",        "#10b981", "son cou et sa queue très longs"),
+  dino("parasaurolophus",  "Parasaurolophus",   "#ec4899", "sa crête qui fait de la musique"),
+  dino("carnotaure",       "Carnotaure",        "#dc2626", "deux cornes au-dessus des yeux"),
+  dino("dilophosaure",     "Dilophosaure",      "#7c3aed", "ses deux crêtes sur la tête"),
+  dino("iguanodon",        "Iguanodon",         "#0ea5e9", "son pouce pointu comme une épine"),
+  dino("giganotosaure",    "Giganotosaure",     "#b45309", "encore plus grand que le T-Rex"),
+  dino("styracosaure",     "Styracosaure",      "#f59e0b", "une couronne de cornes autour de la tête"),
+  dino("pachycephalosaure","Pachycéphalosaure", "#8b5cf6", "sa tête dure comme un casque"),
+  dino("compsognathus",    "Compsognathus",     "#06b6d4", "le plus petit, comme une poule"),
+  dino("torosaure",        "Torosaure",         "#0891b2", "une immense collerette"),
+  dino("corythosaure",     "Corythosaure",      "#38bdf8", "sa crête ronde comme un casque"),
+  dino("allosaure",        "Allosaure",         "#f43f5e", "un grand chasseur du Jurassique"),
+  dino("gallimimus",       "Gallimimus",        "#fb923c", "il court comme une autruche"),
+  dino("cryolophosaure",   "Cryolophosaure",    "#a3e635", "une crête comme une couronne"),
+  dino("gorgosaure",       "Gorgosaure",        "#e11d48", "un cousin rapide du T-Rex"),
 ];
 
 // ---- State ----
@@ -683,7 +695,7 @@ function trimHistory(){ if(S.history.length>40) S.history.length=40; }
 
 // ---------- Level-up overlay ----------
 function showLevelUp(hero, chapId){
-  $("levelupHero").innerHTML = hero ? heroSVG(hero,150,true) : "🎉";
+  $("levelupHero").innerHTML = hero ? heroSVG(hero,260,true) : "🎉";
   $("levelupName").textContent = hero ? "Nouveau dinosaure : "+hero.name+" !" : "Nouveau niveau !";
   $("levelupPower").textContent = hero ? "Ce qu'il a de spécial : "+hero.power : "";
   const ch=S.chapters[chapId], chap=chapObj(chapId);
@@ -709,21 +721,15 @@ function confetti(){
   setTimeout(()=>c.classList.add("hidden"),3400);
 }
 
-// ---------- Hero SVG ----------
+// ---------- Dinosaur image card ----------
 function heroSVG(hero, size, unlocked){
+  const s=Math.round(size);
   if(!unlocked){
-    return `<svg viewBox="0 0 100 120" width="${size}" height="${size*1.2}">
-      <path d="M22 58 L50 52 L78 58 L70 112 L50 98 L30 112 Z" fill="#cbd5e1"/>
-      <circle cx="50" cy="50" r="34" fill="#94a3b8"/>
-      <circle cx="50" cy="50" r="34" fill="none" stroke="#e2e8f0" stroke-width="3"/>
-      <text x="50" y="64" font-size="38" text-anchor="middle">❓</text></svg>`;
+    return `<div class="dinoframe locked" style="width:${s}px;height:${s}px;">
+      <span style="font-size:${Math.round(size*0.42)}px">❓</span></div>`;
   }
-  return `<svg viewBox="0 0 100 120" width="${size}" height="${size*1.2}">
-    <path d="M22 58 L50 52 L78 58 L70 112 L50 98 L30 112 Z" fill="#334155"/>
-    <circle cx="50" cy="50" r="34" fill="${hero.color}"/>
-    <circle cx="50" cy="50" r="34" fill="none" stroke="#ffffff" stroke-width="3"/>
-    <text x="50" y="63" font-size="40" text-anchor="middle">${hero.emoji}</text>
-    <text x="50" y="22" font-size="15" text-anchor="middle">⭐</text></svg>`;
+  return `<div class="dinoframe" style="width:${s}px;height:${s}px;--dc:${hero.color};">
+      <img src="${hero.img}" alt="${hero.name}" loading="lazy"></div>`;
 }
 
 // ---------- Screens ----------
@@ -754,9 +760,8 @@ function renderHome(){
     const dots = c.levels.map((_,i)=>{
       const cls = i<ch.levelIdx?"dot done":(i===ch.levelIdx && !done?"dot cur":"dot");
       return `<span class="${cls}"></span>`;}).join("");
-    const hi = heroIndexFor(c.id, Math.min(ch.levelIdx, c.levels.length-1));
-    const hero = HEROES[hi];
-    const heroShown = (ch.levelIdx>0) ? HEROES[heroIndexFor(c.id, ch.levelIdx-1)].emoji : "";
+    const lastHero = ch.levelIdx>0 ? HEROES[heroIndexFor(c.id, ch.levelIdx-1)] : null;
+    const heroShown = lastHero ? `<img class="cheroimg" src="${lastHero.img}" alt="">` : "";
     const btn=document.createElement("button");
     btn.className="chap";
     btn.innerHTML=`<div class="ctop"><div class="cic">${c.icon}</div>
@@ -803,7 +808,7 @@ function renderChapter(){
   // dinosaur preview for the SELECTED level
   const hero=HEROES[heroIndexFor(id, selectedLevel)];
   const un=S.heroes.includes(hero.id);
-  $("chapHero").innerHTML = `${heroSVG(hero,104,un)}
+  $("chapHero").innerHTML = `${heroSVG(hero,240,un)}
       <div class="heroName">${un?hero.name:"Dinosaure à débloquer"}</div>
       <div class="heroPower">${un?("Spécial : "+hero.power):"Réussis le test pour le gagner"}</div>`;
 
@@ -827,15 +832,15 @@ function renderChapter(){
 // ---------- Gallery ----------
 function openGallery(){
   showScreen("gallery");
-  $("galCount").textContent = `(${S.heroes.length}/${HEROES.length})`;
   const used = totalLevels();
+  $("galCount").textContent = `(${S.heroes.length}/${used})`;
   const g=$("gallery"); g.innerHTML="";
   HEROES.slice(0,used).forEach(h=>{
     const un=S.heroes.includes(h.id);
     const d=document.createElement("div");
     d.className="herocard"+(un?"":" locked");
-    d.innerHTML=`${heroSVG(h,84,un)}<div class="hn">${un?h.name:"???"}</div>
-      <div class="hp">${un?("Pouvoir : "+h.power):"À débloquer"}</div>`;
+    d.innerHTML=`${heroSVG(h,150,un)}<div class="hn">${un?h.name:"???"}</div>
+      <div class="hp">${un?h.power:"À débloquer"}</div>`;
     g.appendChild(d);
   });
 }
