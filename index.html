@@ -377,7 +377,7 @@ const CHAPTERS = [
   {id:"audio", name:"Écoute les nombres", icon:"🔊", type:"audio", levels:BANDS},
   {id:"seq",   name:"Nombre manquant",    icon:"❓", type:"seq",   levels:BANDS},
   {id:"add",   name:"Additions",          icon:"➕", type:"add",
-     levels:[{max:5},{max:10},{max:15},{max:20}]},
+     levels:[1,2,3,4,5,6,7,8,9].map(k=>({k, aMax:10}))},   // Kumon : +1, +2, … +9
   {id:"sub",   name:"Soustractions",      icon:"➖", type:"sub",
      levels:[{max:10},{max:20}]},
 ];
@@ -515,11 +515,16 @@ function genSeq(min, max){
   const answer=seq[hide];
   return {kind:"missing", seq:seq.map((v,i)=> i===hide ? null : v), answer};
 }
+function genAddK(k, aMax){
+  // Kumon-style: add a fixed number k to a varying first number
+  const a = 1 + rnd(aMax);          // 1..aMax
+  return {kind:"calc", a, b:k, op:"+", answer:a+k};
+}
 function genProblem(chap, level){
   if(chap.type==="audio") return genAudio(level.min, level.max);
   if(chap.type==="seq")   return genSeq(level.min, level.max);
-  if(chap.type==="sub")   return genCalc("-", level.max);
-  return genCalc("+", level.max);
+  if(chap.type==="add")   return genAddK(level.k, level.aMax);
+  return genCalc("-", level.max);   // sub
 }
 function factKey(p){
   if(p.kind==="calc") return `${p.a}${p.op}${p.b}`;
@@ -776,7 +781,9 @@ function renderHome(){
 
 let curChap=null, selectedLevel=0;
 function rangeLabel(c, lvl){
-  return (c.type==="add"||c.type==="sub") ? "≤ "+lvl.max : lvl.min+"–"+lvl.max;
+  if(c.type==="add") return "+ "+lvl.k;
+  if(c.type==="sub") return "≤ "+lvl.max;
+  return lvl.min+"–"+lvl.max;
 }
 function openChapter(id, keepSel){
   const c=chapObj(id), ch=S.chapters[id];
